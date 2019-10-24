@@ -14,21 +14,20 @@
 #function Start-PSAdmin {Start-Process PowerShell -Verb RunAs}
 
 #Class to validate Directories name.
-class dir_class {
-        [void]DirEval([string]$Dir){
-            if (-not (Test-Path -LiteralPath $Dir)) {
-                try {
-                    New-DbaDirectory -SqlInstance localhost -Path $Dir
-                }
-                catch {
-                    Write-Error -Message "Unable to create directory '$Dir'. Error was: $_" -ErrorAction Stop
-                }
-                "Successfully created directory '$Dir'."
-            }
-            else {
-                "Directory already existed"
-            }
+function dir_eval {
+    param ([string]$Dir)
+    if (-not (Test-Path -LiteralPath $Dir)) {
+        try {
+            New-DbaDirectory -SqlInstance localhost -Path $Dir
         }
+        catch {
+            Write-Error -Message "Unable to create directory '$Dir'. Error was: $_" -ErrorAction Stop
+        }
+        "Successfully created directory '$Dir'."
+    }
+    else    {
+        "Directory already existed"
+    }    
 }
 
 #Global variables
@@ -71,8 +70,7 @@ $jsonUni = Read-Host -Prompt 'Input your drive letter to store service account j
 $jsonDir = 'jsonFiles'
 $jsonurl = -join($jsonUni,':\',$jsonDir)
 
-$dir = [dir_class]::new()
-$dir.DirEval($jsonurl)
+dir_eval Dir $jsonurl
 
 #Get the service account's json file coppied into the server
 gsutil cp gs://ti-sql-01/jsonfiles/dbbackup-user@ti-ca-infrastructure.json $jsonurl
@@ -89,7 +87,7 @@ $bkpUni = Read-Host -Prompt 'Input your drive letter to store backups (D: Defaul
 $bkpDir = $dbserver
 $bkpurl = -join($bkpUni,'\',$bkpDir)
 
-$dir.DirEval($bkpurl)
+dir_eval Dir $bkpurl
 
 New-Item -Path $bkpurl\testtransfer.txt -itemtype file -ErrorAction Stop | Out-Null #-Force
 
@@ -140,8 +138,6 @@ $BkpDir = Read-Host -Prompt 'Input your Backup directory (I:\Backup)'
 
 #Read-Host -Prompt "Press Enter to continue or CTRL+C to quit"
 
-$dir = [dir_class]::new()
-$dir.DirEval($datDir)
-$dir.DirEval($logDir)
-$dir.DirEval($BkpDir)
-
+dir_eval Dir $datDir
+dir_eval Dir $logDir
+dir_eval Dir $BkpDir
