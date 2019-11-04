@@ -1,7 +1,7 @@
 ﻿#Required Modules
 #Please verify 
 #dbatools - [Install-Module dbatools -force]
-#Git - [Install-Module posh-git -Scope CurrentUser -Force]
+#Git - [Install-Module posh-git -Scope CurrentUser -Force] (optional)
 #sp_whoisactive - [git clone https://github.com/amachanic/sp_whoisactive.git]
 #git clone 
 
