@@ -23,37 +23,40 @@ CREATE PROCEDURE dbo.set_defaultpathdb
 AS
 	SELECT @what, @dir
 
-	if @what='D'
+	if @what=N'D'
 		Begin
+			SELECT 'aqui 1'
 		--— Change default location for data files
 			EXEC   xp_instance_regwrite
 			   N'HKEY_LOCAL_MACHINE',
 			   N'Software\Microsoft\MSSQLServer\MSSQLServer',
 			   N'DefaultData',
 			   REG_SZ,
-			   N'C:\MSSQL\Data'
+			   @dir
 		end
 	else
 		Begin
-			if @what='L'
+			if @what=N'L'
 				Begin
+				SELECT 'aqui 2'
 				--— Change default location for log files
 					EXEC   xp_instance_regwrite
 					   N'HKEY_LOCAL_MACHINE',
 					   N'Software\Microsoft\MSSQLServer\MSSQLServer',
 					   N'DefaultLog',
 					   REG_SZ,
-					   N'C:\MSSQL\Logs'
+					   @dir
 				end
 			else
 				Begin
+					SELECT 'aqui 3'
 					--— Change default location for backups
 					EXEC   xp_instance_regwrite
 					   N'HKEY_LOCAL_MACHINE',
 					   N'Software\Microsoft\MSSQLServer\MSSQLServer',
 					   N'BackupDirectory',
 					   REG_SZ,
-					   N'C:\MSSQL\Backups'
+					   @dir
 				End
 		End
 

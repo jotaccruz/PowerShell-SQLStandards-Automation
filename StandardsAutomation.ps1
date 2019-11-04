@@ -1,14 +1,15 @@
 ﻿#Required Modules
-#Please verify Powershell version 6. [https://github.com/PowerShell/PowerShell/releases/tag/v6.2.3]
-#Please verify dbatools. [Install-Module dbatools -force]
-#Please verify GraphicalTools. [Install-Module Microsoft.PowerShell.GraphicalTools]
-#Please verify StoragePre2K12. [Install-Module -Name StoragePre2K12]
+#Please verify 
+#dbatools - [Install-Module dbatools -force]
+#Git - [Install-Module posh-git -Scope CurrentUser -Force]
+#sp_whoisactive - [git clone https://github.com/amachanic/sp_whoisactive.git]
+#git clone 
 
 #Using Command Prompt (Admin) run
 #gcloud components update
 #gcloud auth login [Follows the steps showed]
 
-#$PSVersionTable.PSVersion 6.0 [pwsh.exe]
+#$PSVersionTable.PSVersion
 #$env:PSModulePath
 
 #function Start-PSAdmin {Start-Process PowerShell -Verb RunAs}
@@ -23,9 +24,9 @@ $actual_dir=Get-Location
 #Function to validate Directories name.
 function dir_eval {
     param ([string]$Dir)
-    if (-not (Test-DbaPath -SqlInstance localhost -Path $Dir)) {
+    if (-not (Test-DbaPath -SqlInstance $dbserver -Path $Dir)) {
         try {
-            New-DbaDirectory -SqlInstance localhost -Path $Dir
+            New-DbaDirectory -SqlInstance $dbserver -Path $Dir
             "Successfully created directory '$Dir'."
         }
         catch {
@@ -43,30 +44,39 @@ function menu_cons{
     )
     Clear-host
     Write-Host "===================== $Title ====================="
+    Write-Host ""
     Write-Host "[1] Validate your hardware"
     Write-Host "[2] Test GCP location for Backups"
     Write-Host "[3] Configure the Windows page file"
     Write-Host "[4] Test Instant File Initialization (IFI)"
     Write-Host "[5] Configure SQL Server Max Memory"
     Write-Host "[6] Set the default database path"
-    Write-Host "[7] Continue...."
-    
+    Write-Host "[7] Install DBAdmin"
+    Write-Host "[8] Restart the database Service"
+    Write-Host "[9] Install Database toolkit"
+    Write-Host ""
     Write-Host "[Q] Press the option number or 'Q' to quit."
+    Write-Host ""
 }
+
 
 ############################ Principal Code ############################
 do
 {
-    menu_cons -Title "SQL Server Standard Setup"
+    menu_cons -Title "TELUS - SQL Server Standard Setup"
     $UserInput = Read-Host "Please make a selection"
     switch($UserInput)
         {
         ##############[1] Validate your hardware
         '1' {
-                Write-Host "2.1 Get the right-sized operating system drive"
-                Write-Host "2.2 Provision storage for the OS and for SQL Server"
-                Write-Host "2.3 Provision storage for Backups"
-                Write-Host "4.1 Format the drives with 64 K allocation blocks"
+                Clear-Host
+                Write-Host ""
+                Write-Host "Please take care about the following specs:"
+                Write-Host ""
+                Write-Host "1. Get the right-sized operating system drive"
+                Write-Host "2. Provision storage for the OS and for SQL Server"
+                Write-Host "3. Provision storage for Backups"
+                Write-Host "4. Format the drives with 64 K allocation blocks"
                 Write-Host ""
 
                 try {
@@ -77,7 +87,34 @@ do
                     Write-Error -Message "Unable to get Disk information. Error was: $_" -ErrorAction Stop
                     }
 
-                #Format-Volume -DriveLetter D -AllocationUnitSize 65536 -FileSystem NTFS
+                $shell = new-object -comobject "WScript.Shell"
+                $choice = $shell.popup("Do you need format a drive?",0,"Drive Format",4+32)
+
+                if( $choice -eq 6 )
+                {
+                    $msg = 'Do you want to continue '
+                    do {
+                        $response = 1
+
+                        if ($response -eq 1) {
+                            $DriveFormat = Read-Host "Enter the drive letter (e.g. D)"
+                            Format-Volume -DriveLetter $DriveFormat -AllocationUnitSize 65536 -FileSystem NTFS -Confirm:$false -Force
+                        }
+
+                        choice /c yn /m $msg
+                        $response = $LASTEXITCODE
+
+                    } until ($response -eq 2)
+                    
+                    #$
+                    #do
+                    #{
+                    #    
+                    #    pause
+                    #    $UserInputFormat = Read-Host "Enter the drive letter: (e.g. D) or [S] to exit:"
+                    #}
+                    #until ($UserInputFormat -eq 's')
+                }
             }
         
         ##############[2] Test GCP location for Backups
@@ -127,23 +164,28 @@ do
                 {
                     Write-Error -Message "Unable to transfer to '$bkpurl'. Error was: $_" -ErrorAction Stop
                 }
+                Write-Host ""
             }
-        
+ 
+         ##############[3] Page File Setting
         '3' {
-                Get-DbaPageFileSetting -ComputerName localhost | Out-GridView
+                Get-DbaPageFileSetting -ComputerName $dbserver | Out-GridView
             }
 
+         ##############[3] IFI Setting
         '4' {
-                Invoke-Sqlcmd -ConnectionTimeout 0 -Database master -InputFile IFI-Testing.sql -QueryTimeout 0 -ServerInstance localhost | Out-GridView
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database master -InputFile IFI-Testing.sql -QueryTimeout 0 -ServerInstance $dbserver | Out-GridView
             }
 
+         ##############[3] Memory Setting
         '5' {
                 Set-Location $actual_dir
-                Test-DbaMaxMemory -SqlInstance localhost | Out-GridView
+                Test-DbaMaxMemory -SqlInstance $dbserver | Out-GridView
             }
 
+         ##############[3] Defaulth db path
         '6' {
-                Get-DbaDefaultPath -SqlInstance localhost | Out-GridView
+                Get-DbaDefaultPath -SqlInstance $dbserver | Out-GridView
 
                 $datDirConf = Read-Host -Prompt 'Do you need to set up these directories right now (N (Default) or Y)'
 
@@ -156,9 +198,12 @@ do
                     dir_eval $logDir
                     dir_eval $BkpDir
 
-                    Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile setdefaultpathdb.sql -QueryTimeout 0 -ServerInstance localhost
-                    Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -Query "exec set_defaultpathdb @what='D' @dir='D:\Data';" -QueryTimeout 0 -ServerInstance localhost
+                    Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Setdefaultpathdb-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
+                    Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -Query "exec set_defaultpathdb @what = N'D', @dir = N'$datDir';" -QueryTimeout 0 -ServerInstance $dbserver
+                    Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -Query "exec set_defaultpathdb @what = N'L', @dir = N'$logDir';" -QueryTimeout 0 -ServerInstance $dbserver
+                    Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -Query "exec set_defaultpathdb @what = N'B', @dir = N'$BkpDir';" -QueryTimeout 0 -ServerInstance $dbserver
 
+                    Write-Host "Don't forget this setting requires Restart MSSQL Service"
                 }
                 else
                 {
@@ -168,15 +213,26 @@ do
                 }
             }
 
+         ##############[3] Database Admin creation
         '7' {
-                
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database master -InputFile DBAdmin-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
             }
 
+         ##############[3] Database services
         '8' {
-                
+                Get-DbaService -ComputerName $dbserver | Out-GridView
             }
 
+         ##############[3] IFI setting
+        '9' {
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile who_is_active.sql -QueryTimeout 0 -ServerInstance $dbserver
+            }
+
+        '10' {
+                
+            }
         }
     pause
 }
 until ($UserInput -eq 'q')
+clear
