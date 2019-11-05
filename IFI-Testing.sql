@@ -1,16 +1,5 @@
-declare @InstanceDefaultDataPath varchar(250)
-declare @InstanceDefaultLogPath varchar(250)
-
-SELECT @InstanceDefaultDataPath = CONCAT(CONVERT (VARCHAR(250),serverproperty('InstanceDefaultDataPath')),'ifitesting.mdf')
-SELECT @InstanceDefaultLogPath = CONCAT(CONVERT (VARCHAR(250),serverproperty('InstanceDefaultLogPath')),'ifitesting.ldf')
-
-declare @statement nvarchar(500) = concat ('CREATE DATABASE [ifitesting]
-ON  PRIMARY 
-( NAME = N''ifitesting'', FILENAME = ''',@InstanceDefaultDataPath,''', SIZE = 262144KB , FILEGROWTH = 1048576KB )
- LOG ON 
-( NAME = N''ifitesting_log'', FILENAME = ''',@InstanceDefaultLogPath ,''', SIZE = 131072KB , FILEGROWTH = 262144KB )')
-
-exec sp_executesql @statement
+use master
+CREATE DATABASE [ifitesting]
 
 DECLARE @startdate datetime
 DECLARE @enddate datetime
