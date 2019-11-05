@@ -225,7 +225,13 @@ do
 
          ##############[3] IFI setting
         '9' {
+                Write-Host "Installing sp_whoisactive...."
                 Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile who_is_active.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Write-Host "Configuring Database Mail...."
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile DBmail-Config.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Write-Host "Installing Alerts...."
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Alerts-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
+
             }
 
         '10' {
