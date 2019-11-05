@@ -54,6 +54,7 @@ function menu_cons{
     Write-Host "[7] Install DBAdmin"
     Write-Host "[8] Restart the database Service"
     Write-Host "[9] Install Database toolkit"
+    Write-Host "[A] Instance Settings (RConn,BChecksum,AgentXps)"
     Write-Host ""
     Write-Host "[Q] Press the option number or 'Q' to quit."
     Write-Host ""
@@ -225,17 +226,32 @@ do
 
          ##############[3] IFI setting
         '9' {
+                Write-Host ""
                 Write-Host "Installing sp_whoisactive...."
+                Write-Host ""
                 Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile who_is_active.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Write-Host ""
                 Write-Host "Configuring Database Mail...."
+                Write-Host ""
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile DBmail-Enable.sql -QueryTimeout 0 -ServerInstance $dbserver
                 Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile DBmail-Config.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile FailsafeOperator-On.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Write-Host ""
                 Write-Host "Installing Alerts...."
+                Write-Host ""
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Operator-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
                 Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Alerts-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
 
             }
 
-        '10' {
-                
+        'A' {
+                Write-Host ""
+                Write-Host "Instance Settings...."
+                Write-Host ""
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Alerts-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Write-Host ""
+                Write-Host "...."
+                Write-Host ""
             }
         }
     pause
