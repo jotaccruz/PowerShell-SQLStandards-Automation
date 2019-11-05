@@ -38,22 +38,6 @@ EXECUTE msdb.dbo.sysmail_add_principalprofile_sp
     @is_default = 1 ;
 
 
---==========================================================
--- Enable Database Mail
---==========================================================
-USE master;
-GO
-
-sp_CONFIGURE 'show advanced', 1
-GO
-RECONFIGURE
-GO
-sp_CONFIGURE 'Database Mail XPs', 1
-GO
-RECONFIGURE
-GO 
-
-
 --EXEC master.dbo.xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'SOFTWARE\Microsoft\MSSQLServer\SQLServerAgent', N'DatabaseMailProfile', N'REG_SZ', N''
 --EXEC master.dbo.xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'SOFTWARE\Microsoft\MSSQLServer\SQLServerAgent', N'UseDatabaseMail', N'REG_DWORD', 1
 --GO

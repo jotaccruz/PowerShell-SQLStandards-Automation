@@ -18,5 +18,3 @@ GO
 EXEC sp_configure 'show advanced options', '0';
 RECONFIGURE
 GO
-SELECT * FROM  sys.configurations WHERE name = 'Database Mail XPs'
-GO
