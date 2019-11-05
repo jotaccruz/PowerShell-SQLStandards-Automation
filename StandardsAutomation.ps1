@@ -248,7 +248,7 @@ do
                 Write-Host ""
                 Write-Host "Instance Settings...."
                 Write-Host ""
-                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Alerts-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
+                Invoke-Sqlcmd -ConnectionTimeout 0 -Database DBAdmin -InputFile Configuration-Update.sql -QueryTimeout 0 -ServerInstance $dbserver
                 Write-Host ""
                 Write-Host "...."
                 Write-Host ""
