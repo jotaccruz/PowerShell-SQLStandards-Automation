@@ -1,6 +1,8 @@
-﻿#Required Modules
-#Please verify 
-#dbatools - [Install-Module dbatools -force]
+﻿#Major Powershell Supported Version: 4
+#$PSVersionTable.PSVersion
+
+#Required Modules
+#dbatools - https://dbatools.io/zip
 #Git - [Install-Module posh-git -Scope CurrentUser -Force] (optional)
 #sp_whoisactive - [git clone https://github.com/amachanic/sp_whoisactive.git]
 #git clone 
@@ -9,7 +11,6 @@
 #gcloud components update
 #gcloud auth login [Follows the steps showed]
 
-#$PSVersionTable.PSVersion
 #$env:PSModulePath
 
 #function Start-PSAdmin {Start-Process PowerShell -Verb RunAs}
@@ -45,16 +46,17 @@ function menu_cons{
     Clear-host
     Write-Host "===================== $Title ====================="
     Write-Host ""
-    Write-Host "[1] Validate your hardware"
-    Write-Host "[2] Test GCP location for Backups"
-    Write-Host "[3] Configure the Windows page file"
-    Write-Host "[4] Test Instant File Initialization (IFI)"
-    Write-Host "[5] Configure SQL Server Max Memory"
-    Write-Host "[6] Set the default database path"
-    Write-Host "[7] Install DBAdmin"
-    Write-Host "[8] Restart the database Service"
-    Write-Host "[9] Install Database toolkit"
-    Write-Host "[A] Instance Settings (RConn,BChecksum,AgentXps)"
+    Write-Host "[A] Disks"
+    Write-Host "[B] GCP Communication"
+    Write-Host "[C] Windows page file"
+    Write-Host "[D] IFI Testing"
+    Write-Host "[E] SQL Server Max Memory"
+    Write-Host "[F] Default database path"
+    Write-Host "[G] DBAdmin"
+    Write-Host "[H] Database Services Info"
+    Write-Host "[I] Database toolkit install"
+    Write-Host "[J] Instance Settings (RConn,BkCompress)"
+    Write-Host "[K] Server Name"
     Write-Host ""
     Write-Host "[Q] Press the option number or 'Q' to quit."
     Write-Host ""
@@ -69,15 +71,15 @@ do
     switch($UserInput)
         {
         ##############[1] Validate your hardware
-        '1' {
+        'A' {
                 Clear-Host
                 Write-Host ""
                 Write-Host "Please take care about the following specs:"
                 Write-Host ""
-                Write-Host "1. Get the right-sized operating system drive"
-                Write-Host "2. Provision storage for the OS and for SQL Server"
-                Write-Host "3. Provision storage for Backups"
-                Write-Host "4. Format the drives with 64 K allocation blocks"
+                Write-Host "- Get the right-sized operating system drive"
+                Write-Host "- Provision storage for the OS and for SQL Server"
+                Write-Host "- Provision storage for Backups"
+                Write-Host "- Format the drives with 64 K allocation block size"
                 Write-Host ""
 
                 try {
@@ -89,19 +91,20 @@ do
                     }
 
                 $shell = new-object -comobject "WScript.Shell"
-                $choice = $shell.popup("Do you need format a drive?",0,"Drive Format",4+32)
+                $choice = $shell.popup("Remember 64K BlockSize for data and log. Do you need format a drive?",0,"Drive Format",4+32)
 
                 if( $choice -eq 6 )
                 {
-                    $msg = 'Do you want to continue '
+                    $msg = 'Do you need to format another drive '
                     do {
                         $response = 1
 
                         if ($response -eq 1) {
+                            Write-Host ""
                             $DriveFormat = Read-Host "Enter the drive letter (e.g. D)"
                             Format-Volume -DriveLetter $DriveFormat -AllocationUnitSize 65536 -FileSystem NTFS -Confirm:$false -Force
                         }
-
+                        Write-Host ""
                         choice /c yn /m $msg
                         $response = $LASTEXITCODE
 
@@ -119,12 +122,17 @@ do
             }
         
         ##############[2] Test GCP location for Backups
-        '2' {
+        'B' {
                 #Variable inicialization
                 #$jsonUni: Drive letter for json File
                 #$jsonDir: Directory name where locate json file
                 #$jsonurl: Full URL - Directory where locate json file
 
+                Clear-Host
+                Write-Host ""
+                Write-Host "GCP Communication"
+                Write-Host ""
+                
                 while (!$jsonUni) 
                 {
                     $jsonUni = Read-Host -Prompt 'Input your drive letter to store service account json file (e.g. D)'
@@ -169,23 +177,35 @@ do
             }
  
          ##############[3] Page File Setting
-        '3' {
+        'C' {
+                #Write-Host ""
+                Write-Host "Windows Page File Setting"
+                Write-Host ""
                 Get-DbaPageFileSetting -ComputerName $dbserver | Out-GridView
             }
 
          ##############[3] IFI Setting
-        '4' {
+        'D' {
+                #Write-Host ""
+                Write-Host "IFI Testing"
+                Write-Host ""
                 Invoke-Sqlcmd -ConnectionTimeout 0 -Database master -InputFile IFI-Testing.sql -QueryTimeout 0 -ServerInstance $dbserver | Out-GridView
             }
 
          ##############[3] Memory Setting
-        '5' {
+        'E' {
+                #Write-Host ""
+                Write-Host "SQL Server Max Memory"
+                Write-Host ""
                 Set-Location $actual_dir
                 Test-DbaMaxMemory -SqlInstance $dbserver | Out-GridView
             }
 
          ##############[3] Defaulth db path
-        '6' {
+        'F' {
+                #Write-Host ""
+                Write-Host "Default database path"
+                Write-Host ""
                 Get-DbaDefaultPath -SqlInstance $dbserver | Out-GridView
 
                 $datDirConf = Read-Host -Prompt 'Do you need to set up these directories right now (N (Default) or Y)'
@@ -215,17 +235,17 @@ do
             }
 
          ##############[3] Database Admin creation
-        '7' {
+        'G' {
                 Invoke-Sqlcmd -ConnectionTimeout 0 -Database master -InputFile DBAdmin-Create.sql -QueryTimeout 0 -ServerInstance $dbserver
             }
 
          ##############[3] Database services
-        '8' {
+        'H' {
                 Get-DbaService -ComputerName $dbserver | Out-GridView
             }
 
          ##############[3] IFI setting
-        '9' {
+        'I' {
                 Write-Host ""
                 Write-Host "Installing sp_whoisactive...."
                 Write-Host ""
@@ -244,7 +264,7 @@ do
 
             }
 
-        'A' {
+        'J' {
                 Write-Host ""
                 Write-Host "Instance Settings...."
                 Write-Host ""
